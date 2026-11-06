@@ -15,5 +15,5 @@ output "kv_namespace_title" {
 
 output "application_url" {
   description = "Public URL of the Student Task Management application"
-  value       = "https://${cloudflare_workers_script.task_manager_worker.name}.workers.dev"
+  value       = "https://${cloudflare_workers_script.task_manager_worker.name}.bitwardha-lostfound.workers.dev"
 }
