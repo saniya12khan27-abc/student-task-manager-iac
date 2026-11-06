@@ -37,6 +37,18 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
+      - name: Sync Existing Cloudflare Resources
+        run: |
+          KV_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" | jq -r '.result[] | select(.title=="student_tasks") | .id')
+          if [ -n "$KV_ID" ] && [ "$KV_ID" != "null" ]; then
+            echo "Importing existing KV namespace: $KV_ID"
+            terraform import -var="cloudflare_account_id=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" -var="cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}" cloudflare_workers_kv_namespace.tasks_kv "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/$KV_ID" || true
+          fi
+          echo "Importing existing Worker script if present..."
+          terraform import -var="cloudflare_account_id=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" -var="cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}" cloudflare_workers_script.task_manager_worker "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/student-task-manager" || true
+
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
